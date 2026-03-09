@@ -1,0 +1,33 @@
+# Environment
+.env
+.env.*
+.env.local
+.venv/
+__pycache__/
+*.pyc
+
+# Results (large files, don't commit)
+results/designs/*.pdb
+results/designs/*.cif
+results/scores/
+results/submissions/
+
+# Data files (downloaded at runtime)
+data/trem2/*.pdb
+
+# Tools (cloned repos)
+tools/
+
+# Mosaic (cloned separately)
+mosaic/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Modal
+.modal/

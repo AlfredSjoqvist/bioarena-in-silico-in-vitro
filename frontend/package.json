@@ -1,0 +1,11 @@
+{
+  "name": "trem2-scorer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TREM2 Binder Lab</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #09090b; color: #fafafa; min-height: 100vh; }
+
+    /* Layout */
+    .app { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #27272a; margin-bottom: 24px; }
+    .logo { font-size: 18px; font-weight: 700; color: #22c55e; }
+    .logo span { color: #71717a; font-weight: 400; }
+
+    /* Setup bar */
+    .setup { background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 16px; margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+    .setup .field { flex: 1; min-width: 200px; }
+    .setup label { font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .setup input { width: 100%; background: #09090b; border: 1px solid #3f3f46; color: #fafafa; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    .setup input:focus { outline: none; border-color: #22c55e; }
+    .setup .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .setup .dot.green { background: #22c55e; }
+    .setup .dot.red { background: #ef4444; }
+    .setup .dot.gray { background: #52525b; }
+    .status-text { font-size: 11px; color: #71717a; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0; margin-bottom: 24px; }
+    .tab { padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid #27272a; background: #18181b; color: #a1a1aa; transition: all 0.15s; }
+    .tab:first-child { border-radius: 8px 0 0 8px; }
+    .tab:last-child { border-radius: 0 8px 8px 0; }
+    .tab.active { background: #22c55e; color: #09090b; border-color: #22c55e; font-weight: 600; }
+    .tab:hover:not(.active) { background: #27272a; color: #fafafa; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Cards */
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .card h3 { font-size: 14px; color: #fafafa; margin-bottom: 4px; }
+    .card p { font-size: 12px; color: #71717a; margin-bottom: 12px; }
+
+    /* Form elements */
+    .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .form-group { flex: 1; min-width: 120px; }
+    .form-group label { font-size: 11px; color: #a1a1aa; display: block; margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; background: #09090b; border: 1px solid #3f3f46; color: #fafafa; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #22c55e; }
+    textarea { width: 100%; background: #09090b; border: 1px solid #3f3f46; color: #22c55e; padding: 12px; border-radius: 6px; font-family: 'SF Mono', monospace; font-size: 13px; resize: vertical; min-height: 100px; }
+    textarea:focus { outline: none; border-color: #22c55e; }
+    textarea::placeholder { color: #3f3f46; }
+
+    /* Buttons */
+    .btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: #22c55e; color: #09090b; }
+    .btn-primary:hover { background: #16a34a; }
+    .btn-secondary { background: #27272a; color: #fafafa; border: 1px solid #3f3f46; }
+    .btn-secondary:hover { background: #3f3f46; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* Results table */
+    .results-table { width: 100%; border-collapse: collapse; }
+    .results-table th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #71717a; border-bottom: 1px solid #27272a; }
+    .results-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #18181b; }
+    .results-table tr:hover { background: #1c1c1f; }
+    .results-table tr.clickable { cursor: pointer; }
+
+    /* Badges */
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .badge-green { background: #052e16; color: #4ade80; }
+    .badge-yellow { background: #422006; color: #fbbf24; }
+    .badge-red { background: #450a0a; color: #fca5a5; }
+    .badge-blue { background: #0c1a3d; color: #60a5fa; }
+
+    /* Progress */
+    .progress-bar { height: 6px; background: #27272a; border-radius: 3px; overflow: hidden; margin-top: 12px; }
+    .progress-fill { height: 100%; background: #22c55e; transition: width 0.3s; border-radius: 3px; }
+
+    /* Spinner */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #27272a; border-top: 2px solid #22c55e; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Alert */
+    .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
+    .alert-info { background: #0c1a3d; border: 1px solid #1e3a5f; color: #93c5fd; }
+    .alert-success { background: #052e16; border: 1px solid #166534; color: #86efac; }
+    .alert-error { background: #450a0a; border: 1px solid #7f1d1d; color: #fca5a5; }
+    .alert-warning { background: #422006; border: 1px solid #854d0e; color: #fde68a; }
+
+    /* Detail panel */
+    .detail-panel { background: #0d0d0f; border: 1px solid #27272a; border-radius: 6px; padding: 16px; margin-top: 12px; max-height: 300px; overflow-y: auto; font-family: 'SF Mono', monospace; font-size: 12px; color: #71717a; white-space: pre-wrap; word-break: break-all; }
+
+    /* Sequence display */
+    .seq-display { font-family: 'SF Mono', monospace; font-size: 12px; color: #22c55e; word-break: break-all; padding: 8px; background: #09090b; border-radius: 4px; border: 1px solid #27272a; margin-top: 4px; cursor: pointer; position: relative; }
+    .seq-display:hover::after { content: 'Click to copy'; position: absolute; top: -24px; right: 0; background: #3f3f46; color: #fafafa; padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+
+    /* Target info */
+    .target-bar { display: flex; align-items: center; gap: 12px; background: #09090b; border: 1px solid #27272a; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; }
+    .target-bar .label { color: #71717a; }
+    .target-bar .value { color: #22c55e; font-family: 'SF Mono', monospace; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .form-row { flex-direction: column; }
+      .setup { flex-direction: column; }
+    }
+
+    /* Transfer button */
+    .transfer-btn { background: none; border: 1px dashed #3f3f46; color: #71717a; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+    .transfer-btn:hover { border-color: #22c55e; color: #22c55e; }
+
+    /* Debug log */
+    .debug-log { background: #0d0d0f; border: 1px solid #27272a; border-radius: 6px; padding: 12px; margin-top: 12px; max-height: 200px; overflow-y: auto; font-family: 'SF Mono', monospace; font-size: 11px; color: #71717a; display: none; }
+    .debug-log.visible { display: block; }
+    .debug-log .log-line { margin-bottom: 2px; }
+    .debug-log .log-error { color: #fca5a5; }
+    .debug-log .log-ok { color: #86efac; }
+    .debug-log .log-info { color: #93c5fd; }
+    .debug-log .log-time { color: #fbbf24; }
+
+    /* Timer */
+    .timer { font-family: 'SF Mono', monospace; font-size: 13px; color: #fbbf24; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">TREM2 Binder Lab <span>// bioArena Hackathon</span></div>
+    <div>
+      <span class="dot" id="designDot"></span>
+      <span class="status-text" id="designStatus">Design: checking...</span>
+      &nbsp;&nbsp;
+      <span class="dot" id="scoreDot"></span>
+      <span class="status-text" id="scoreStatus">Score: checking...</span>
+    </div>
+  </header>
+
+  <!-- API Setup -->
+  <div class="setup">
+    <div class="field">
+      <label>Design API (BoltzGen)</label>
+      <input type="text" id="designApiUrl" value="/api/design" oninput="checkEndpoints()" />
+    </div>
+    <div class="field">
+      <label>Score API (Boltz-2)</label>
+      <input type="text" id="scoreApiUrl" value="/api/score" oninput="checkEndpoints()" />
+    </div>
+    <div style="flex:0 0 auto; display:flex; align-items:end; gap:8px;">
+      <button class="btn btn-secondary" onclick="checkEndpoints(true)" style="padding:8px 12px;font-size:11px;">Test APIs</button>
+      <button class="btn btn-secondary" onclick="toggleDebug()" style="padding:8px 12px;font-size:11px;">Debug Log</button>
+    </div>
+  </div>
+
+  <!-- Debug log -->
+  <div class="debug-log" id="debugLog"></div>
+
+  <!-- Target -->
+  <div class="target-bar">
+    <span class="label">Target:</span>
+    <strong style="color:#fafafa">TREM2</strong>
+    <span class="label">(87 aa)</span>
+    <span class="value" style="font-size:10px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">AHNTTVFQGVAGQSLQVSCPYDSMKHWGRRKAWCRQLGELLDRGDKQASDQQLGFVTQREAQPPPKAVLAHSQSLDLSKIPKTKVMF</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('design')">1. Design Binders</div>
+    <div class="tab" onclick="switchTab('score')">2. Score Binders</div>
+    <div class="tab" onclick="switchTab('results')">3. All Results</div>
+  </div>
+
+  <!-- PANEL 1: DESIGN -->
+  <div class="panel active" id="panel-design">
+    <div class="card">
+      <h3>Generate New TREM2 Binders</h3>
+      <p>Uses Mosaic/Boltz-2 gradient optimization to design binder sequences from scratch. Each design gets its own A100 GPU and runs in parallel (~10-15 min).</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Binder Length (amino acids)</label>
+          <input type="number" id="binderLength" value="100" min="40" max="250" />
+        </div>
+        <div class="form-group">
+          <label>Number of Designs</label>
+          <select id="numDesigns">
+            <option value="1">1 design</option>
+            <option value="2">2 designs (parallel)</option>
+            <option value="3" selected>3 designs (parallel)</option>
+            <option value="5">5 designs (parallel)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Random Seed</label>
+          <input type="number" id="designSeed" value="42" />
+        </div>
+      </div>
+
+      <details style="margin-bottom:12px">
+        <summary style="cursor:pointer;font-size:12px;color:#71717a;">Advanced Settings</summary>
+        <div class="form-row" style="margin-top:8px">
+          <div class="form-group">
+            <label>Stage 1 Steps</label>
+            <input type="number" id="stage1Steps" value="100" />
+          </div>
+          <div class="form-group">
+            <label>Stage 2 Steps</label>
+            <input type="number" id="stage2Steps" value="50" />
+          </div>
+          <div class="form-group">
+            <label>Stage 3 Steps</label>
+            <input type="number" id="stage3Steps" value="15" />
+          </div>
+          <div class="form-group">
+            <label>Design Samples</label>
+            <input type="number" id="designSamples" value="4" />
+          </div>
+          <div class="form-group">
+            <label>Ranking Samples</label>
+            <input type="number" id="rankingSamples" value="6" />
+          </div>
+        </div>
+      </details>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="designBtn" onclick="runDesign()">Generate Binders</button>
+        <span id="designTimer" class="timer" style="margin-left:12px;line-height:38px;"></span>
+      </div>
+
+      <div id="designAlert" style="margin-top:12px"></div>
+      <div class="progress-bar" id="designProgress" style="display:none"><div class="progress-fill" id="designProgressFill"></div></div>
+    </div>
+
+    <!-- Design Results -->
+    <div id="designResults"></div>
+  </div>
+
+  <!-- PANEL 2: SCORE -->
+  <div class="panel" id="panel-score">
+    <div class="card">
+      <h3>Score Binder Sequences</h3>
+      <p>Paste binder sequences to predict binding to TREM2 using Boltz-2 + ipSAE scoring. All binders score in parallel on separate GPUs (~5-10 min).</p>
+
+      <div class="form-row">
+        <div class="form-group" style="flex:3">
+          <label>Binder Sequences (FASTA or one per line)</label>
+          <textarea id="scoreInput" rows="6" placeholder=">my_binder_1
+MDEEKRLLAVFANFDKSVSEAYRRAVKLNLPDKESGKTALDFLRQMVEKEFQLQAFDEARRAGEADLTAQITDHLDEIRRDY
+
+>my_binder_2
+AELLKQIVDKLRSELPKESGRTALDFVRKMVD"></textarea>
+        </div>
+        <div class="form-group" style="flex:0 0 100px">
+          <label>Samples</label>
+          <input type="number" id="scoreSamples" value="5" min="1" max="20" />
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="scoreBtn" onclick="runScore()">Score Binders</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('scoreInput').value=''">Clear</button>
+        <span id="scoreTimer" class="timer" style="margin-left:12px;line-height:38px;"></span>
+      </div>
+
+      <div id="scoreAlert" style="margin-top:12px"></div>
+      <div class="progress-bar" id="scoreProgress" style="display:none"><div class="progress-fill" id="scoreProgressFill"></div></div>
+    </div>
+
+    <!-- Score Results -->
+    <div id="scoreResults"></div>
+  </div>
+
+  <!-- PANEL 3: ALL RESULTS -->
+  <div class="panel" id="panel-results">
+    <div class="card">
+      <h3>All Results <span id="resultCount" class="badge badge-blue" style="margin-left:8px">0</span></h3>
+      <p>All designed and scored binders, ranked by ipSAE. Click a row for details. Select your top 10 for submission.</p>
+
+      <div class="btn-row" style="margin-bottom:12px">
+        <button class="btn btn-secondary" onclick="exportAllResults()">Export JSON</button>
+        <button class="btn btn-secondary" onclick="exportFasta()">Export FASTA</button>
+        <button class="btn btn-secondary" onclick="clearAllResults()">Clear All</button>
+      </div>
+
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Length</th>
+            <th>ipSAE</th>
+            <th>ipTM</th>
+            <th>pLDDT</th>
+            <th>Verdict</th>
+            <th>Source</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="allResultsBody"></tbody>
+      </table>
+    </div>
+
+    <div id="detailPanel" style="display:none">
+      <div class="card">
+        <h3 id="detailTitle">Details</h3>
+        <div class="seq-display" id="detailSeq" onclick="copySeq(this)"></div>
+        <div class="detail-panel" id="detailJson"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let allResults = [];
+
+  // ===== DEBUG LOGGING =====
+  function log(msg, type='info') {
+    const ts = new Date().toLocaleTimeString();
+    const el = document.getElementById('debugLog');
+    const cls = type === 'error' ? 'log-error' : type === 'ok' ? 'log-ok' : type === 'time' ? 'log-time' : 'log-info';
+    el.innerHTML += `<div class="log-line ${cls}">[${ts}] ${msg}</div>`;
+    el.scrollTop = el.scrollHeight;
+    console.log(`[${ts}] [${type}] ${msg}`);
+  }
+
+  function toggleDebug() {
+    const el = document.getElementById('debugLog');
+    el.classList.toggle('visible');
+  }
+
+  // ===== TIMER =====
+  function startTimer(elementId) {
+    const el = document.getElementById(elementId);
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - start) / 1000);
+      const m = Math.floor(elapsed / 60);
+      const s = elapsed % 60;
+      el.textContent = `${m}:${s.toString().padStart(2,'0')} elapsed`;
+    }, 1000);
+    return { interval, start };
+  }
+
+  function stopTimer(timer, elementId) {
+    clearInterval(timer.interval);
+    const elapsed = Math.floor((Date.now() - timer.start) / 1000);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    document.getElementById(elementId).textContent = `Done in ${m}:${s.toString().padStart(2,'0')}`;
+  }
+
+  // Tab switching
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['design','score','results'][i] === name));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`panel-${name}`).classList.add('active');
+    if (name === 'results') renderAllResults();
+  }
+
+  // ===== ENDPOINT STATUS (ping health) =====
+  async function checkEndpoints(verbose) {
+    const designUrl = document.getElementById('designApiUrl').value.trim();
+    const scoreUrl = document.getElementById('scoreApiUrl').value.trim();
+
+    // Design API
+    if (designUrl) {
+      const healthUrl = designUrl.replace(/\/$/, '') + '/health';
+      if (verbose) log(`Testing Design API: GET ${healthUrl}`);
+      try {
+        const r = await fetch(healthUrl);
+        const d = await r.json();
+        document.getElementById('designDot').className = 'dot green';
+        document.getElementById('designStatus').textContent = `Design: online`;
+        if (verbose) log(`Design API OK: ${JSON.stringify(d)}`, 'ok');
+      } catch(e) {
+        document.getElementById('designDot').className = 'dot red';
+        document.getElementById('designStatus').textContent = `Design: offline`;
+        if (verbose) log(`Design API FAILED: ${e.message}`, 'error');
+      }
+    } else {
+      document.getElementById('designDot').className = 'dot gray';
+      document.getElementById('designStatus').textContent = 'Design: not set';
+    }
+
+    // Score API
+    if (scoreUrl) {
+      const healthUrl = scoreUrl.replace(/\/$/, '') + '/health';
+      if (verbose) log(`Testing Score API: GET ${healthUrl}`);
+      try {
+        const r = await fetch(healthUrl);
+        const d = await r.json();
+        document.getElementById('scoreDot').className = 'dot green';
+        document.getElementById('scoreStatus').textContent = `Score: online`;
+        if (verbose) log(`Score API OK: ${JSON.stringify(d)}`, 'ok');
+      } catch(e) {
+        document.getElementById('scoreDot').className = 'dot red';
+        document.getElementById('scoreStatus').textContent = `Score: offline`;
+        if (verbose) log(`Score API FAILED: ${e.message}`, 'error');
+      }
+    } else {
+      document.getElementById('scoreDot').className = 'dot gray';
+      document.getElementById('scoreStatus').textContent = 'Score: not set';
+    }
+  }
+
+  // Alert helper
+  function showAlert(id, type, msg) {
+    document.getElementById(id).innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  }
+
+  // Parse FASTA
+  function parseFasta(text) {
+    const lines = text.trim().split('\n');
+    const binders = [];
+    let name = null, seq = [];
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t) continue;
+      if (t.startsWith('>')) {
+        if (name && seq.length) binders.push({name, seq: seq.join('')});
+        name = t.slice(1).split(/\s/)[0] || `binder_${binders.length}`;
+        seq = [];
+      } else {
+        const s = t.replace(/[^A-Za-z]/g,'').toUpperCase();
+        if (s) { if (!name) { binders.push({name:`binder_${binders.length}`, seq:s}); } else seq.push(s); }
+      }
+    }
+    if (name && seq.length) binders.push({name, seq: seq.join('')});
+    return binders;
+  }
+
+  // Copy sequence
+  function copySeq(el) {
+    navigator.clipboard.writeText(el.textContent);
+    const orig = el.style.borderColor;
+    el.style.borderColor = '#22c55e';
+    setTimeout(() => el.style.borderColor = orig, 500);
+  }
+
+  // Score badge
+  function scoreBadge(val) {
+    if (!val || val === 0) return '<span class="badge badge-blue">--</span>';
+    if (val >= 0.6) return `<span class="badge badge-green">${val.toFixed(4)}</span>`;
+    if (val >= 0.3) return `<span class="badge badge-yellow">${val.toFixed(4)}</span>`;
+    return `<span class="badge badge-red">${val.toFixed(4)}</span>`;
+  }
+
+  function verdictBadge(ipsae) {
+    if (!ipsae || ipsae === 0) return '<span class="badge badge-blue">Pending</span>';
+    if (ipsae >= 0.6) return '<span class="badge badge-green">LIKELY BINDER</span>';
+    return '<span class="badge badge-red">UNLIKELY</span>';
+  }
+
+  // ===== DESIGN =====
+  async function runDesign() {
+    const baseUrl = document.getElementById('designApiUrl').value.trim().replace(/\/$/, '');
+    if (!baseUrl) { showAlert('designAlert','error','Set the Design API URL first.'); return; }
+
+    const url = baseUrl + '/design';
+    const body = {
+      binder_length: parseInt(document.getElementById('binderLength').value),
+      seed: parseInt(document.getElementById('designSeed').value),
+      num_designs: parseInt(document.getElementById('numDesigns').value),
+      stage1_steps: parseInt(document.getElementById('stage1Steps').value),
+      stage2_steps: parseInt(document.getElementById('stage2Steps').value),
+      stage3_steps: parseInt(document.getElementById('stage3Steps').value),
+      design_samples: parseInt(document.getElementById('designSamples').value),
+      ranking_samples: parseInt(document.getElementById('rankingSamples').value),
+    };
+
+    log(`Design request: POST ${url}`, 'info');
+    log(`Params: ${JSON.stringify(body)}`, 'info');
+
+    document.getElementById('designBtn').disabled = true;
+    showAlert('designAlert','info',`<span class="spinner"></span> Generating ${body.num_designs} binder(s) of length ${body.binder_length} on ${body.num_designs} parallel GPU(s)...`);
+    document.getElementById('designProgress').style.display = 'block';
+    document.getElementById('designProgressFill').style.width = '5%';
+
+    const timer = startTimer('designTimer');
+
+    // Progress animation (estimated ~10 min = 600s)
+    let prog = 5;
+    const progInterval = setInterval(() => {
+      const elapsed = (Date.now() - timer.start) / 1000;
+      prog = Math.min(5 + (elapsed / 600) * 85, 90);
+      document.getElementById('designProgressFill').style.width = prog + '%';
+    }, 2000);
+
+    try {
+      const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      clearInterval(progInterval);
+      document.getElementById('designProgressFill').style.width = '100%';
+
+      log(`Design response: HTTP ${resp.status}`, resp.ok ? 'ok' : 'error');
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        log(`Response body: ${errText.slice(0, 500)}`, 'error');
+        throw new Error(`HTTP ${resp.status}: ${errText}`);
+      }
+
+      const data = await resp.json();
+      log(`Design result: ${JSON.stringify(data).slice(0, 300)}...`, 'ok');
+
+      if (data.error) {
+        log(`Design error: ${data.error}`, 'error');
+        if (data.traceback) log(`Traceback: ${data.traceback}`, 'error');
+        showAlert('designAlert','error', `Error: ${data.error}`);
+        return;
+      }
+
+      const designs = data.designs || [];
+      showAlert('designAlert','success', `Generated ${designs.length} binder(s) in ${data.total_time_seconds}s`);
+
+      let html = '';
+      for (const d of designs) {
+        if (d.error) {
+          log(`Design ${d.design_id} error: ${d.error}`, 'error');
+          html += `<div class="card"><h3>${d.design_id}</h3><div class="alert alert-error">${d.error}</div></div>`;
+          continue;
+        }
+        allResults.push({...d, source:'design', best_ipsae: 0, scored: false});
+        log(`Design ${d.design_id}: seq=${d.binder_seq?.slice(0,30)}... ipTM=${d.iptm} pLDDT=${d.plddt_mean}`, 'ok');
+        html += `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3>${d.design_id}</h3>
+            <button class="transfer-btn" onclick="sendToScore('${d.binder_seq}','${d.design_id}')">Score this binder &rarr;</button>
+          </div>
+          <div style="display:flex;gap:16px;margin:8px 0;font-size:13px">
+            <span>Length: <strong>${d.binder_length}</strong> aa</span>
+            <span>ipTM: <strong>${(d.iptm||0).toFixed(4)}</strong></span>
+            <span>pLDDT: <strong>${(d.plddt_mean||0).toFixed(1)}</strong></span>
+            <span>Time: ${d.design_time_seconds}s</span>
+          </div>
+          <div class="seq-display" onclick="copySeq(this)">${d.binder_seq}</div>
+        </div>`;
+      }
+      document.getElementById('designResults').innerHTML = html;
+      document.getElementById('designSeed').value = parseInt(document.getElementById('designSeed').value) + body.num_designs;
+
+    } catch(e) {
+      clearInterval(progInterval);
+      log(`Design FAILED: ${e.message}`, 'error');
+      showAlert('designAlert','error', `Failed: ${e.message}`);
+    } finally {
+      stopTimer(timer, 'designTimer');
+      document.getElementById('designBtn').disabled = false;
+      setTimeout(() => { document.getElementById('designProgress').style.display = 'none'; }, 3000);
+    }
+  }
+
+  // Transfer designed binder to score tab
+  function sendToScore(seq, name) {
+    const textarea = document.getElementById('scoreInput');
+    const existing = textarea.value.trim();
+    textarea.value = (existing ? existing + '\n' : '') + `>${name}\n${seq}`;
+    switchTab('score');
+  }
+
+  // ===== SCORE =====
+  async function runScore() {
+    const baseUrl = document.getElementById('scoreApiUrl').value.trim().replace(/\/$/, '');
+    if (!baseUrl) { showAlert('scoreAlert','error','Set the Score API URL first.'); return; }
+
+    const url = baseUrl + '/score';
+    const binders = parseFasta(document.getElementById('scoreInput').value);
+    if (!binders.length) { showAlert('scoreAlert','error','Paste at least one amino acid sequence.'); return; }
+
+    const numSamples = parseInt(document.getElementById('scoreSamples').value);
+    document.getElementById('scoreBtn').disabled = true;
+
+    const reqBody = {
+      binders: binders.map(b => ({binder_seq: b.seq, binder_name: b.name})),
+      num_samples: numSamples
+    };
+
+    log(`Score request: POST ${url} (${binders.length} binders, ${numSamples} samples)`, 'info');
+    log(`Binders: ${binders.map(b => b.name).join(', ')}`, 'info');
+
+    showAlert('scoreAlert','info',`<span class="spinner"></span> Scoring ${binders.length} binder(s) on ${binders.length} parallel GPU(s)...`);
+    document.getElementById('scoreProgress').style.display = 'block';
+    document.getElementById('scoreProgressFill').style.width = '5%';
+
+    const timer = startTimer('scoreTimer');
+
+    // Progress animation (estimated ~8 min = 480s)
+    let prog = 5;
+    const progInterval = setInterval(() => {
+      const elapsed = (Date.now() - timer.start) / 1000;
+      prog = Math.min(5 + (elapsed / 480) * 85, 90);
+      document.getElementById('scoreProgressFill').style.width = prog + '%';
+    }, 2000);
+
+    try {
+      const resp = await fetch(url, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(reqBody)
+      });
+      clearInterval(progInterval);
+      document.getElementById('scoreProgressFill').style.width = '100%';
+
+      log(`Score response: HTTP ${resp.status}`, resp.ok ? 'ok' : 'error');
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        log(`Response body: ${errText.slice(0, 500)}`, 'error');
+        throw new Error(`HTTP ${resp.status}: ${errText}`);
+      }
+
+      const data = await resp.json();
+      log(`Score result: ${JSON.stringify(data).slice(0, 300)}...`, 'ok');
+
+      const results = data.results || [data];
+
+      let html = '';
+      for (const r of results) {
+        const existing = allResults.find(ar => ar.binder_seq === r.binder_seq);
+        if (existing) {
+          Object.assign(existing, {best_ipsae: r.best_ipsae||0, scored:true, score_data:r, verdict:r.verdict});
+        } else {
+          allResults.push({
+            design_id: r.binder_name||'?', binder_seq:r.binder_seq||'',
+            binder_length:r.binder_length||0, iptm:0, plddt_mean:0,
+            best_ipsae:r.best_ipsae||0, scored:true, score_data:r, source:'manual', verdict:r.verdict
+          });
+        }
+
+        if (r.error) {
+          log(`Score ${r.binder_name||'?'}: ERROR - ${r.error}`, 'error');
+          html += `<div class="card"><h3>${r.binder_name||'?'}</h3><div class="alert alert-error">${r.error}</div></div>`;
+          continue;
+        }
+        const ipsae = r.best_ipsae || 0;
+        log(`Score ${r.binder_name}: ipSAE=${ipsae.toFixed(4)} verdict=${r.verdict} time=${r.time_seconds}s`, 'ok');
+        html += `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3>${r.binder_name} ${scoreBadge(ipsae)}</h3>
+            ${verdictBadge(ipsae)}
+          </div>
+          <div style="display:flex;gap:16px;margin:8px 0;font-size:13px">
+            <span>Length: <strong>${r.binder_length}</strong> aa</span>
+            <span>ipSAE: <strong>${ipsae.toFixed(4)}</strong></span>
+            <span>Time: ${r.time_seconds}s</span>
+          </div>
+          <div class="seq-display" onclick="copySeq(this)">${r.binder_seq}</div>
+        </div>`;
+      }
+      document.getElementById('scoreResults').innerHTML = html;
+      showAlert('scoreAlert','success',`Done! ${results.length} binder(s) scored in ${data.total_time_seconds||'?'}s (parallel).`);
+    } catch(e) {
+      clearInterval(progInterval);
+      log(`Score FAILED: ${e.message}`, 'error');
+      showAlert('scoreAlert','error', `Failed: ${e.message}`);
+    } finally {
+      stopTimer(timer, 'scoreTimer');
+      document.getElementById('scoreBtn').disabled = false;
+      setTimeout(() => { document.getElementById('scoreProgress').style.display = 'none'; }, 3000);
+    }
+  }
+
+  // ===== ALL RESULTS =====
+  function renderAllResults() {
+    const sorted = [...allResults].sort((a,b) => (b.best_ipsae||0) - (a.best_ipsae||0));
+    document.getElementById('resultCount').textContent = sorted.length;
+
+    let html = '';
+    sorted.forEach((r, i) => {
+      html += `<tr class="clickable" onclick="showDetail(${allResults.indexOf(r)})">
+        <td>${i+1}</td>
+        <td>${r.design_id || '?'}</td>
+        <td>${r.binder_length || '?'} aa</td>
+        <td>${scoreBadge(r.best_ipsae)}</td>
+        <td>${(r.iptm||0).toFixed(3)}</td>
+        <td>${(r.plddt_mean||0).toFixed(0)}</td>
+        <td>${r.scored ? verdictBadge(r.best_ipsae) : '<span class="badge badge-blue">Not scored</span>'}</td>
+        <td><span class="badge badge-${r.source==='design'?'green':'blue'}">${r.source||'?'}</span></td>
+        <td>${!r.scored ? '<button class="transfer-btn" onclick="event.stopPropagation();sendToScore(\''+r.binder_seq+'\',\''+r.design_id+'\')">Score</button>' : ''}</td>
+      </tr>`;
+    });
+    document.getElementById('allResultsBody').innerHTML = html || '<tr><td colspan="9" style="text-align:center;color:#71717a;padding:24px">No results yet. Design or score some binders!</td></tr>';
+  }
+
+  function showDetail(idx) {
+    const r = allResults[idx];
+    document.getElementById('detailPanel').style.display = 'block';
+    document.getElementById('detailTitle').textContent = r.design_id || 'Binder Details';
+    document.getElementById('detailSeq').textContent = r.binder_seq || '';
+    document.getElementById('detailJson').textContent = JSON.stringify(r, null, 2);
+  }
+
+  function exportAllResults() {
+    if (!allResults.length) return;
+    const blob = new Blob([JSON.stringify(allResults,null,2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `trem2_results_${new Date().toISOString().slice(0,19).replace(/[:-]/g,'')}.json`;
+    a.click();
+  }
+
+  function exportFasta() {
+    if (!allResults.length) return;
+    const sorted = [...allResults].sort((a,b) => (b.best_ipsae||0) - (a.best_ipsae||0));
+    let fasta = '';
+    sorted.forEach((r,i) => {
+      fasta += `>${r.design_id||'binder_'+i} ipSAE=${(r.best_ipsae||0).toFixed(4)} ipTM=${(r.iptm||0).toFixed(4)} length=${r.binder_length}\n${r.binder_seq}\n`;
+    });
+    const blob = new Blob([fasta], {type:'text/plain'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `trem2_binders_${new Date().toISOString().slice(0,19).replace(/[:-]/g,'')}.fasta`;
+    a.click();
+  }
+
+  function clearAllResults() {
+    if (!confirm('Clear all results?')) return;
+    allResults = [];
+    renderAllResults();
+    document.getElementById('designResults').innerHTML = '';
+    document.getElementById('scoreResults').innerHTML = '';
+    document.getElementById('detailPanel').style.display = 'none';
+  }
+
+  // Init: check endpoints on load
+  renderAllResults();
+  checkEndpoints(false);
+  log('TREM2 Binder Lab initialized. Click "Test APIs" to verify connectivity.', 'info');
+</script>
+</body>
+</html>

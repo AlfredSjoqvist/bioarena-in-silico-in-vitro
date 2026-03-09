@@ -1,0 +1,30 @@
+# Core scientific stack
+numpy==2.1
+scipy==1.15.1
+pandas
+matplotlib
+biopython
+
+# Modal (serverless GPU compute)
+modal
+
+# Rowan MCP (molecular simulation tools)
+rowan-mcp
+
+# OpenRouter / LLM APIs
+openai
+anthropic
+
+# Protein language models
+transformers
+torch
+
+# Scoring
+# IPSAE: clone from https://github.com/DunbrackLab/IPSAE (only needs numpy)
+
+# Mosaic (Boltz-2 binder design):
+# Clone from https://github.com/escalante-bio/mosaic
+# Install separately: cd mosaic && uv sync --group jax-cuda
+
+# PyYAML for config files
+pyyaml

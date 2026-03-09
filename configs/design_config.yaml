@@ -1,0 +1,114 @@
+# TREM2 Binder Design Configuration
+# Adapted from Adaptyv Nipah competition winner (Escalante Bio / Mosaic)
+# UPDATED with TREM2-specific fixes from cross-bot research (bot1-bot6)
+
+target:
+  name: TREM2
+  pdb_id: 5UD7
+  chain: A
+  # Ectodomain residues 19-105 (87 AA hackathon construct)
+  sequence: "AHNTTVFQGVAGQSLQVSCPYDSMKHWGRRKAWCRQLGELLDRGDKQASDQQLGFVTQREAQPPPKAVLAHSQSLDLSKIPKTKVMF"
+
+binder:
+  # TREM2-adapted lengths: 65-85 AA (AVOID 100-120 Ig-fold size basin)
+  lengths: [70, 75, 80, 85]
+  # Number of designs per length (40 total = 10x4 lengths)
+  n_per_length:
+    70: 10
+    75: 10
+    80: 10
+    85: 10
+  # Seed offsets per length bucket (for reproducibility)
+  seed_offsets:
+    65: 300
+    70: 0
+    75: 400
+    80: 100
+    85: 200
+
+optimization:
+  stage1:
+    steps: 100
+    stepsize_factor: 0.2  # multiplied by sqrt(binder_length)
+    momentum: 0.3
+  stage2:
+    steps: 50
+    stepsize_factor: 0.5
+    scale: 1.25  # L2 regularization for sparsity
+    logspace: true
+  stage3:
+    steps: 15
+    stepsize_factor: 0.5
+    scale: 1.4  # More aggressive sparsity
+    logspace: true
+
+design:
+  diffusion_samples: 4  # Quality over speed
+  recycling_steps: 1
+  cysteine_bias: -1e6  # Prevent disulfides (MPNN level)
+
+ranking:
+  diffusion_samples: 6  # More samples for accurate scoring
+  recycling_steps: 3    # More recycling for accurate scoring
+
+loss_weights:
+  # Design loss weights (from competition winner + TREM2 adaptations)
+  binder_target_contact: 1.0
+  within_binder_contact: 1.0
+  inverse_folding_recovery: 10.0  # Key novel element - prevents metric gaming
+  inverse_folding_temp: 0.001
+  helix_loss: 2.5                 # MANDATORY for TREM2 - prevents Ig-fold convergence
+  target_binder_pae: 0.05
+  binder_target_pae: 0.05
+  iptm: 0.025
+  within_binder_pae: 0.4
+  ptm_energy: 0.025
+  plddt: 0.1
+
+  # Ranking loss weights
+  ranking_iptm: 1.0
+  ranking_target_binder_ipsae: 0.5
+  ranking_binder_target_ipsae: 0.5
+
+cysteine_prevention:
+  # Three layers of cysteine prevention:
+  mpnn_bias: -1e6            # Layer 1: MPNN sampling bias
+  pssm_hard_clamp: true      # Layer 2: PSSM[:, Cys_idx] = -inf at extraction
+  post_filter: true           # Layer 3: Hard reject any remaining
+
+monomer_validation:
+  min_monomer_plddt: 80.0
+  max_monomer_rmsd: 2.0  # Angstroms, backbone CA RMSD complex vs monomer
+  recycling_steps: 3
+
+compute:
+  gpu: A100  # Cheaper than B200, still fast enough
+  timeout_hours: 1
+  max_concurrent: 10  # Modal parallel jobs
+  retries: 1  # retry on preemption
+
+submission:
+  max_binders: 10
+  min_edit_distance: 10  # Between submitted binders (Levenshtein)
+  min_ipsae: 0.45  # TREM2-adjusted (0.5 on small target ~ 0.6 on large target)
+  min_length_buckets: 2  # At least 2 different lengths represented
+  max_ipsae_asymmetry: 0.25  # Warn if |bt - tb| > 0.25
+
+# Loss weight variants for diversity (used by design_turbo.py)
+variants:
+  standard:
+    helix_loss: 2.5
+    binder_target_contact: 1.0
+    note: "Baseline with all TREM2 fixes"
+  contact_heavy:
+    helix_loss: 2.5
+    binder_target_contact: 2.0
+    note: "Stronger interface contacts"
+  helix_strong:
+    helix_loss: 3.5
+    binder_target_contact: 1.0
+    note: "More aggressive helical enforcement"
+  helix_light:
+    helix_loss: 2.0
+    binder_target_contact: 1.0
+    note: "Lighter helix constraint for more exploration"

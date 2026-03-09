@@ -1,0 +1,24 @@
+# ipSAE Scoring Configuration
+
+ipsae:
+  pae_cutoff: 10      # PAE threshold for interface residues
+  dist_cutoff: 10     # Distance threshold (Angstroms) for contacts
+  # Supported input formats:
+  #   AlphaFold2: JSON (PAE) + PDB (structure)
+  #   AlphaFold3: JSON (PAE) + CIF (structure)
+  #   Boltz1/2:   NPZ (PAE) + CIF/PDB (structure)
+
+# ipSAE score interpretation:
+#   > 0.8  = High confidence binder (excellent)
+#   > 0.6  = Likely binder (good)
+#   > 0.4  = Possible binder (moderate)
+#   < 0.4  = Unlikely binder (poor)
+
+# Selection criteria for final submission
+selection:
+  primary_metric: ipsae_min  # min(binder→target, target→binder)
+  secondary_metric: iptm
+  tertiary_metric: plddt_mean
+  min_ipsae: 0.5
+  min_iptm: 0.5
+  min_plddt: 70.0
